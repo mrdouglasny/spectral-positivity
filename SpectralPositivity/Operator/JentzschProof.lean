@@ -27,47 +27,51 @@ structure (absolute value, positive/negative parts).
 -/
 
 import Mathlib.MeasureTheory.Function.LpSpace.Basic
+import Mathlib.MeasureTheory.Function.LpOrder
+import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.Analysis.InnerProductSpace.l2Space
+import Mathlib.Analysis.InnerProductSpace.Rayleigh
 
 noncomputable section
 
 open MeasureTheory
 
+
 /-! ## Definitions -/
 
 /-- An operator on L²(ℝ^n) is positivity-preserving if it maps nonneg
 functions to nonneg functions. This is weaker than positivity-improving. -/
-def IsPositivityPreserving {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ) : Prop :=
-  ∀ f : Lp ℝ 2 μ,
+def IsPositivityPreserving {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) : Prop :=
+  ∀ f : Lp ℝ 2 (volume : Measure (Ω)),
     (0 ≤ f) → (0 ≤ T f)
 
 /-- An operator on L²(ℝ^n) is positivity-improving if it maps nonneg
 nonzero functions to a.e. strictly positive functions (ae-filter version). -/
-def IsPositivityImproving {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ) : Prop :=
-  ∀ f : Lp ℝ 2 μ,
-    (∀ᵐ x ∂μ, 0 ≤ (f : (Ω) → ℝ) x) →
+def IsPositivityImproving {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) : Prop :=
+  ∀ f : Lp ℝ 2 (volume : Measure (Ω)),
+    (∀ᵐ x ∂(volume : Measure (Ω)), 0 ≤ (f : (Ω) → ℝ) x) →
     (¬ (f : (Ω) → ℝ) =ᵐ[volume] 0) →
-    (∀ᵐ x ∂μ, 0 < (T f : (Ω) → ℝ) x)
+    (∀ᵐ x ∂(volume : Measure (Ω)), 0 < (T f : (Ω) → ℝ) x)
 
 /-- An operator on L²(ℝ^n) is positivity-improving if it maps nonneg
 nonzero functions to a.e. strictly positive functions (Lp lattice version). -/
-def IsPositivityImproving' {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ) : Prop :=
-  ∀ f : Lp ℝ 2 μ,
+def IsPositivityImproving' {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) : Prop :=
+  ∀ f : Lp ℝ 2 (volume : Measure (Ω)),
     (0 ≤ f) →
     (f ≠ 0) →
-    (∀ᵐ x ∂μ, 0 < (T f : (Ω) → ℝ) x)
+    (∀ᵐ x ∂(volume : Measure (Ω)), 0 < (T f : (Ω) → ℝ) x)
 
 /-- Positivity-improving implies positivity-preserving.
     If f ≥ 0 and f ≠ 0, then Tf > 0 a.e. ≥ 0. If f = 0, then Tf = 0 ≥ 0. -/
-theorem IsPositivityImproving'.toPreserving {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    {T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ}
+theorem IsPositivityImproving'.toPreserving {Ω : Type*} [MeasureSpace Ω]
+    {T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))}
     (hT : IsPositivityImproving' T) : IsPositivityPreserving T := by
   intro f hf
   by_cases hf0 : f = 0
@@ -83,9 +87,9 @@ theorem IsPositivityImproving'.toPreserving {Ω : Type*} [MeasurableSpace Ω] {�
 The definitions differ only in whether the hypotheses use ae-filter or Lp order/equality:
 - `0 ≤ f` in Lp ↔ `0 ≤ᵐ[μ] f` (by `Lp.coeFn_nonneg`)
 - `f ≠ 0` in Lp ↔ `¬ f =ᵐ[μ] 0` (by `Lp.eq_zero_iff_ae_eq_zero`) -/
-theorem IsPositivityImproving.toPI' {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    {T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ}
+theorem IsPositivityImproving.toPI' {Ω : Type*} [MeasureSpace Ω]
+    {T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))}
     (hT : IsPositivityImproving T) : IsPositivityImproving' T := by
   intro f hf hf_ne
   apply hT f
@@ -103,17 +107,17 @@ Tf⁺ ≥ 0 and Tf⁻ ≥ 0. Then:
 -/
 
 /-- Phase 1: Absolute value inequality for positivity-preserving operators. -/
-theorem abs_apply_le_apply_abs {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem abs_apply_le_apply_abs {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (hT : IsPositivityPreserving T)
-    (f : Lp ℝ 2 μ) :
+    (f : Lp ℝ 2 (volume : Measure (Ω))) :
     |T f| ≤ T |f| := by
   -- Strategy: |Tf| ≤ T|f| iff Tf ≤ T|f| and -Tf ≤ T|f| (by abs_le').
   -- Both follow from monotonicity of T (positivity-preserving + linear)
   -- and f ≤ |f|, -f ≤ |f|.
   -- Monotonicity: g ≤ h → Tg ≤ Th (since h-g ≥ 0 → T(h-g) ≥ 0 → Th-Tg ≥ 0)
-  have hT_mono : ∀ (g h : Lp ℝ 2 μ),
+  have hT_mono : ∀ (g h : Lp ℝ 2 (volume : Measure (Ω))),
       g ≤ h → T g ≤ T h := by
     intro g h hgh
     have h1 : 0 ≤ h - g := sub_nonneg.mpr hgh
@@ -139,8 +143,8 @@ Proof: |⟨f, Tf⟩| = |∫ f(x) (Tf)(x) dx|
 
 /-- For nonneg L² functions, the inner product is nonneg.
     This is ⟨f, g⟩ = ∫ f(x)·g(x) dx ≥ 0 when f, g ≥ 0 a.e. -/
-private theorem inner_nonneg_of_nonneg_L2 {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (f g : Lp ℝ 2 μ)
+private theorem inner_nonneg_of_nonneg_L2 {Ω : Type*} [MeasureSpace Ω]
+    (f g : Lp ℝ 2 (volume : Measure (Ω)))
     (hf : 0 ≤ f) (hg : 0 ≤ g) :
     (0 : ℝ) ≤ @inner ℝ _ _ f g := by
   rw [MeasureTheory.L2.inner_def]
@@ -150,8 +154,8 @@ private theorem inner_nonneg_of_nonneg_L2 {Ω : Type*} [MeasurableSpace Ω] {μ 
 
 /-- Inner product is monotone in the right argument when the left argument is nonneg.
     If 0 ≤ u and g₁ ≤ g₂ then ⟨u, g₁⟩ ≤ ⟨u, g₂⟩. -/
-private theorem inner_mono_right_L2 {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (u g₁ g₂ : Lp ℝ 2 μ)
+private theorem inner_mono_right_L2 {Ω : Type*} [MeasureSpace Ω]
+    (u g₁ g₂ : Lp ℝ 2 (volume : Measure (Ω)))
     (hu : 0 ≤ u) (hg : g₁ ≤ g₂) :
     @inner ℝ _ _ u g₁ ≤ @inner ℝ _ _ u g₂ := by
   have h := inner_nonneg_of_nonneg_L2 u (g₂ - g₁) hu (sub_nonneg.mpr hg)
@@ -159,8 +163,8 @@ private theorem inner_mono_right_L2 {Ω : Type*} [MeasurableSpace Ω] {μ : Meas
 
 /-- |⟨f, g⟩| ≤ ⟨|f|, |g|⟩ for L² functions.
     Follows from the integral triangle inequality and |a·b| = |a|·|b|. -/
-private theorem abs_inner_le_inner_abs_abs {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (f g : Lp ℝ 2 μ) :
+private theorem abs_inner_le_inner_abs_abs {Ω : Type*} [MeasureSpace Ω]
+    (f g : Lp ℝ 2 (volume : Measure (Ω))) :
     |@inner ℝ _ _ f g| ≤ @inner ℝ _ _ |f| |g| := by
   -- Expand inner products as integrals
   simp only [MeasureTheory.L2.inner_def]
@@ -176,11 +180,11 @@ private theorem abs_inner_le_inner_abs_abs {Ω : Type*} [MeasurableSpace Ω] {μ
         rw [hf_abs, hg_abs, Real.norm_eq_abs, abs_mul, mul_comm]
 
 /-- Phase 2: Inner product inequality. -/
-theorem abs_inner_le_inner_abs {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem abs_inner_le_inner_abs {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (hT_pp : IsPositivityPreserving T)
-    (f : Lp ℝ 2 μ) :
+    (f : Lp ℝ 2 (volume : Measure (Ω))) :
     |@inner ℝ _ _ f (T f)| ≤ @inner ℝ _ _ |f| (T |f|) := by
   -- Step 1: |⟨f, Tf⟩| ≤ ⟨|f|, |Tf|⟩ (integral triangle inequality)
   -- Step 2: ⟨|f|, |Tf|⟩ ≤ ⟨|f|, T|f|⟩ (monotonicity + Phase 1)
@@ -208,21 +212,21 @@ supremum of R, hence |f| is an eigenvector for lam₀.
 
 /-- Phase 3: If f is an eigenvector for the top eigenvalue lam₀,
 then |f| is also an eigenvector for lam₀. -/
-theorem abs_eigenvector_of_top_eigenvector {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem abs_eigenvector_of_top_eigenvector {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (_hT_compact : IsCompactOperator T)
     (hT_sa : IsSelfAdjoint T)
     (hT_pp : IsPositivityPreserving T)
-    (f : Lp ℝ 2 μ)
+    (f : Lp ℝ 2 (volume : Measure (Ω)))
     (hf_ne : f ≠ 0)
     (lam₀ : ℝ) (hlam₀ : 0 < lam₀)
-    (hf_eigen : (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) f = lam₀ • f)
-    (hlam₀_top : ∀ (g : Lp ℝ 2 μ),
+    (hf_eigen : (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) f = lam₀ • f)
+    (hlam₀_top : ∀ (g : Lp ℝ 2 (volume : Measure (Ω))),
       @inner ℝ _ _ g (T g) ≤ lam₀ * ‖g‖ ^ 2) :
-    (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) |f| = lam₀ • |f| := by
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) |f| = lam₀ • |f| := by
   set h := |f| with h_def
   -- Step 1: ‖h‖ = ‖f‖ and h ≠ 0
   have h_norm : ‖h‖ = ‖f‖ := norm_abs_eq_norm f
@@ -281,22 +285,22 @@ T|f| > 0 a.e. But T|f| = lam₀|f|, so |f| > 0 a.e.
 
 /-- Phase 4: The ground state eigenvector (after taking absolute value)
 is strictly positive almost everywhere. -/
-theorem ground_state_strictly_positive {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem ground_state_strictly_positive {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (hT_pi : IsPositivityImproving' T)
-    (e₀ : Lp ℝ 2 μ)
+    (e₀ : Lp ℝ 2 (volume : Measure (Ω)))
     (he₀_ne : e₀ ≠ 0)
     (he₀_nonneg : 0 ≤ e₀)
     (lam₀ : ℝ) (hlam₀ : 0 < lam₀)
-    (he₀_eigen : (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) e₀ = lam₀ • e₀) :
-    ∀ᵐ x ∂μ, 0 < (e₀ : (Ω) → ℝ) x := by
+    (he₀_eigen : (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) e₀ = lam₀ • e₀) :
+    ∀ᵐ x ∂(volume : Measure (Ω)), 0 < (e₀ : (Ω) → ℝ) x := by
   -- T e₀ = lam₀ e₀, and T is positivity-improving, so T e₀ > 0 a.e.
   -- Therefore lam₀ e₀ > 0 a.e., and since lam₀ > 0, e₀ > 0 a.e.
   have hT_pos := hT_pi e₀ he₀_nonneg he₀_ne
   -- T e₀ = lam₀ • e₀ as elements of L²
-  have heq : (T e₀ : Lp ℝ 2 μ) = lam₀ • e₀ := by
+  have heq : (T e₀ : Lp ℝ 2 (volume : Measure (Ω))) = lam₀ • e₀ := by
     exact_mod_cast he₀_eigen
   -- (lam₀ • e₀)(x) = lam₀ * e₀(x) a.e.
   have hsmul := Lp.coeFn_smul lam₀ e₀
@@ -320,21 +324,21 @@ strictly negative a.e.
 -/
 
 /-- Phase 5: Every eigenvector for the top eigenvalue has constant sign. -/
-theorem eigenvector_constant_sign {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem eigenvector_constant_sign {Ω : Type*} [MeasureSpace Ω]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (hT_compact : IsCompactOperator T)
     (hT_sa : IsSelfAdjoint T)
     (hT_pi : IsPositivityImproving' T)
-    (f : Lp ℝ 2 μ)
+    (f : Lp ℝ 2 (volume : Measure (Ω)))
     (hf_ne : f ≠ 0)
     (lam₀ : ℝ) (hlam₀ : 0 < lam₀)
-    (hf_eigen : (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) f = lam₀ • f)
-    (hlam₀_top : ∀ (g : Lp ℝ 2 μ),
+    (hf_eigen : (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) f = lam₀ • f)
+    (hlam₀_top : ∀ (g : Lp ℝ 2 (volume : Measure (Ω))),
       @inner ℝ _ _ g (T g) ≤ lam₀ * ‖g‖ ^ 2) :
-    (∀ᵐ x ∂μ, 0 < (f : (Ω) → ℝ) x) ∨
-    (∀ᵐ x ∂μ, (f : (Ω) → ℝ) x < 0) := by
+    (∀ᵐ x ∂(volume : Measure (Ω)), 0 < (f : (Ω) → ℝ) x) ∨
+    (∀ᵐ x ∂(volume : Measure (Ω)), (f : (Ω) → ℝ) x < 0) := by
   set g := |f| - f with g_def
   -- g ≥ 0: |f(x)| ≥ f(x) pointwise
   have hg_nonneg : 0 ≤ g := by
@@ -385,28 +389,28 @@ contradicting orthogonality.
 -/
 
 /-- Phase 6: The top eigenvalue has multiplicity 1 (is simple). -/
-theorem top_eigenvalue_simple {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem top_eigenvalue_simple {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Measure Ω)).NeBot]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (hT_compact : IsCompactOperator T)
     (hT_sa : IsSelfAdjoint T)
     (hT_pi : IsPositivityImproving' T)
     (lam₀ : ℝ) (hlam₀ : 0 < lam₀)
-    (hlam₀_top : ∀ (g : Lp ℝ 2 μ),
+    (hlam₀_top : ∀ (g : Lp ℝ 2 (volume : Measure (Ω))),
       @inner ℝ _ _ g (T g) ≤ lam₀ * ‖g‖ ^ 2)
-    (u v : Lp ℝ 2 μ)
+    (u v : Lp ℝ 2 (volume : Measure (Ω)))
     (hu_ne : u ≠ 0) (hv_ne : v ≠ 0)
-    (hu_eigen : (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) u = lam₀ • u)
-    (hv_eigen : (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) v = lam₀ • v)
+    (hu_eigen : (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) u = lam₀ • u)
+    (hv_eigen : (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) v = lam₀ • v)
     (h_orth : @inner ℝ _ _ u v = 0) :
     False := by
   -- Helper: if u > 0 a.e. and v > 0 a.e., then ⟨u, v⟩ > 0
   have inner_pos_of_pos :
-      ∀ (f g : Lp ℝ 2 μ),
-      (∀ᵐ x ∂μ, 0 < (f : (Ω) → ℝ) x) →
-      (∀ᵐ x ∂μ, 0 < (g : (Ω) → ℝ) x) →
+      ∀ (f g : Lp ℝ 2 (volume : Measure (Ω))),
+      (∀ᵐ x ∂(volume : Measure (Ω)), 0 < (f : (Ω) → ℝ) x) →
+      (∀ᵐ x ∂(volume : Measure (Ω)), 0 < (g : (Ω) → ℝ) x) →
       (0 : ℝ) < @inner ℝ _ _ f g := by
     intro f g hf_pos hg_pos
     rw [MeasureTheory.L2.inner_def]
@@ -425,10 +429,10 @@ theorem top_eigenvalue_simple {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω
       (L2.integrable_inner f g).congr h_eq.symm
     rw [integral_pos_iff_support_of_nonneg_ae h_nn h_int, pos_iff_ne_zero]
     intro h_zero
-    have h_ae_zero : ∀ᵐ x ∂μ,
+    have h_ae_zero : ∀ᵐ x ∂(volume : Measure (Ω)),
         (g : (Ω) → ℝ) x * (f : (Ω) → ℝ) x = 0 :=
       ae_iff.mpr h_zero
-    have : ∀ᵐ x ∂μ, (0 : ℝ) < 0 := by
+    have : ∀ᵐ x ∂(volume : Measure (Ω)), (0 : ℝ) < 0 := by
       filter_upwards [h_ae_zero, hf_pos, hg_pos] with x hx hfx hgx
       linarith [mul_pos hgx hfx]
     exact absurd this.exists.choose_spec (lt_irrefl 0)
@@ -441,7 +445,7 @@ theorem top_eigenvalue_simple {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω
     · -- v > 0 a.e. → ⟨u, v⟩ > 0, contradiction
       linarith [inner_pos_of_pos u v hu_pos hv_pos]
     · -- v < 0 a.e. → -v > 0 a.e. → ⟨u, -v⟩ > 0 → ⟨u, v⟩ < 0, contradiction
-      have hv_neg_pos : ∀ᵐ x ∂μ,
+      have hv_neg_pos : ∀ᵐ x ∂(volume : Measure (Ω)),
           0 < ((-v : Lp ℝ 2 _) : (Ω) → ℝ) x := by
         filter_upwards [hv_neg, Lp.coeFn_neg v] with x hx hneg
         rw [hneg, Pi.neg_apply]; linarith
@@ -449,7 +453,7 @@ theorem top_eigenvalue_simple {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω
       rw [inner_neg_right] at h_pos
       linarith
   · -- u < 0 a.e. → -u > 0 a.e.
-    have hu_neg_pos : ∀ᵐ x ∂μ,
+    have hu_neg_pos : ∀ᵐ x ∂(volume : Measure (Ω)),
         0 < ((-u : Lp ℝ 2 _) : (Ω) → ℝ) x := by
       filter_upwards [hu_neg, Lp.coeFn_neg u] with x hx hneg
       rw [hneg, Pi.neg_apply]; linarith
@@ -460,7 +464,7 @@ theorem top_eigenvalue_simple {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω
       rw [inner_neg_left] at h_pos
       linarith
     · -- v < 0 a.e. → -v > 0 a.e. → ⟨-u, -v⟩ > 0 → ⟨u, v⟩ > 0, contradiction
-      have hv_neg_pos : ∀ᵐ x ∂μ,
+      have hv_neg_pos : ∀ᵐ x ∂(volume : Measure (Ω)),
           0 < ((-v : Lp ℝ 2 _) : (Ω) → ℝ) x := by
         filter_upwards [hv_neg, Lp.coeFn_neg v] with x hx hneg
         rw [hneg, Pi.neg_apply]; linarith
@@ -488,28 +492,28 @@ But ⟨e₀, g⟩ = 0 with e₀ > 0 and |g| > 0 contradicts constant sign.
 -/
 
 /-- Phase 7: All eigenvalues other than lam₀ satisfy |μ| < lam₀. -/
-theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem spectral_gap {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Measure Ω)).NeBot]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (_hT_compact : IsCompactOperator T)
     (hT_sa : IsSelfAdjoint T)
     (hT_pi : IsPositivityImproving' T)
-    (e₀ : Lp ℝ 2 μ)
+    (e₀ : Lp ℝ 2 (volume : Measure (Ω)))
     (_he₀_ne : e₀ ≠ 0)
     (lam₀ : ℝ) (hlam₀ : 0 < lam₀)
-    (_he₀_eigen : (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) e₀ = lam₀ • e₀)
-    (hlam₀_top : ∀ (g : Lp ℝ 2 μ),
+    (_he₀_eigen : (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) e₀ = lam₀ • e₀)
+    (hlam₀_top : ∀ (g : Lp ℝ 2 (volume : Measure (Ω))),
       @inner ℝ _ _ g (T g) ≤ lam₀ * ‖g‖ ^ 2)
     (_hlam₀_simple : ∀ v, v ≠ 0 →
-      (T : Lp ℝ 2 μ →ₗ[ℝ]
-        Lp ℝ 2 μ) v = lam₀ • v →
+      (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+        Lp ℝ 2 (volume : Measure (Ω))) v = lam₀ • v →
       ∃ c : ℝ, v = c • e₀)
     (μ : ℝ) (hμ_ne : μ ≠ lam₀)
-    (g : Lp ℝ 2 μ)
+    (g : Lp ℝ 2 (volume : Measure (Ω)))
     (hg_ne : g ≠ 0)
-    (hg_eigen : (T : Lp ℝ 2 μ →ₗ[ℝ]
-      Lp ℝ 2 μ) g = μ • g) :
+    (hg_eigen : (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω))) g = μ • g) :
     |μ| < lam₀ := by
   -- Step 1: μ ≤ lam₀ from Rayleigh bound
   have hg_norm_sq_pos : 0 < ‖g‖ ^ 2 := by positivity [norm_pos_iff.mpr hg_ne]
@@ -645,7 +649,7 @@ theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
       · -- p ≠ 0, p ≥ 0: Tp > 0 a.e.
         have hTp_pos := hT_pi p hp_nonneg hp_ne
         -- Tp = lam₀ q: so lam₀ q > 0 a.e., hence q > 0 a.e. (since lam₀ > 0)
-        have hq_pos : ∀ᵐ x ∂μ,
+        have hq_pos : ∀ᵐ x ∂(volume : Measure (Ω)),
             0 < (q : (Ω) → ℝ) x := by
           have hTp_eq : (T p : (Ω) → ℝ) =ᵐ[volume]
               (lam₀ • q : Lp ℝ 2 _) := by rw [hTp]
@@ -658,13 +662,13 @@ theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
         -- Similarly: Tq = lam₀ p, q ≠ 0 (since q > 0 a.e.)
         have hq_ne' : q ≠ 0 := by
           intro h; rw [h] at hq_pos
-          have : ∀ᵐ x ∂μ, (0 : ℝ) < 0 := by
+          have : ∀ᵐ x ∂(volume : Measure (Ω)), (0 : ℝ) < 0 := by
             filter_upwards [hq_pos, Lp.coeFn_zero ℝ 2 volume] with x hp hz
             rwa [hz] at hp
           exact absurd this.exists.choose_spec (lt_irrefl 0)
         have hTq_pos := hT_pi q hq_nonneg hq_ne'
         -- Tq = lam₀ p > 0 a.e., so p > 0 a.e.
-        have hp_pos : ∀ᵐ x ∂μ,
+        have hp_pos : ∀ᵐ x ∂(volume : Measure (Ω)),
             0 < (p : (Ω) → ℝ) x := by
           have hTq_eq : (T q : (Ω) → ℝ) =ᵐ[volume]
               (lam₀ • p : Lp ℝ 2 _) := by rw [hTq]
@@ -679,7 +683,7 @@ theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
         -- But for g(x) ≥ 0: |g(x)| + g(x) = 2g(x) > 0 → g(x) > 0
         --   and |g(x)| - g(x) = 0, contradicting q(x) > 0
         -- So we get contradiction a.e.
-        have : ∀ᵐ x ∂μ, False := by
+        have : ∀ᵐ x ∂(volume : Measure (Ω)), False := by
           filter_upwards [hp_pos, hq_pos,
               Lp.coeFn_add (|g| : Lp ℝ 2 _) g,
               Lp.coeFn_sub (|g| : Lp ℝ 2 _) g,
@@ -704,7 +708,7 @@ theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
         exact absurd this.exists.choose_spec id
       · -- q ≠ 0 case: symmetric argument
         have hTq_pos := hT_pi q hq_nonneg hq_ne
-        have hp_pos : ∀ᵐ x ∂μ,
+        have hp_pos : ∀ᵐ x ∂(volume : Measure (Ω)),
             0 < (p : (Ω) → ℝ) x := by
           have hTq_eq : (T q : (Ω) → ℝ) =ᵐ[volume]
               (lam₀ • p : Lp ℝ 2 _) := by rw [hTq]
@@ -715,12 +719,12 @@ theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
             (fun ⟨h, _⟩ => absurd h (not_lt.mpr hlam₀.le))
         have hp_ne' : p ≠ 0 := by
           intro h; rw [h] at hp_pos
-          have : ∀ᵐ x ∂μ, (0 : ℝ) < 0 := by
+          have : ∀ᵐ x ∂(volume : Measure (Ω)), (0 : ℝ) < 0 := by
             filter_upwards [hp_pos, Lp.coeFn_zero ℝ 2 volume] with x hp hz
             rwa [hz] at hp
           exact absurd this.exists.choose_spec (lt_irrefl 0)
         have hTp_pos := hT_pi p hp_nonneg hp_ne'
-        have hq_pos : ∀ᵐ x ∂μ,
+        have hq_pos : ∀ᵐ x ∂(volume : Measure (Ω)),
             0 < (q : (Ω) → ℝ) x := by
           have hTp_eq : (T p : (Ω) → ℝ) =ᵐ[volume]
               (lam₀ • q : Lp ℝ 2 _) := by rw [hTp]
@@ -729,7 +733,7 @@ theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
           rw [heq, hsmul, Pi.smul_apply, smul_eq_mul] at hpos
           exact (mul_pos_iff.mp hpos).elim (fun ⟨_, h⟩ => h)
             (fun ⟨h, _⟩ => absurd h (not_lt.mpr hlam₀.le))
-        have : ∀ᵐ x ∂μ, False := by
+        have : ∀ᵐ x ∂(volume : Measure (Ω)), False := by
           filter_upwards [hp_pos, hq_pos,
               Lp.coeFn_add (|g| : Lp ℝ 2 _) g,
               Lp.coeFn_sub (|g| : Lp ℝ 2 _) g,
@@ -751,14 +755,14 @@ theorem spectral_gap {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
 
 /-- The Rayleigh quotient ⟨f, Tf⟩ equals the sum Σ eigenval(i) * ⟨b(i), f⟩².
 This follows by applying the inner product CLM to the eigenbasis expansion. -/
-private theorem rayleigh_hasSum {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {ι : Type}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
-    (b : HilbertBasis ι ℝ (Lp ℝ 2 μ))
+private theorem rayleigh_hasSum {Ω : Type*} [MeasureSpace Ω] {ι : Type}
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
+    (b : HilbertBasis ι ℝ (Lp ℝ 2 (volume : Measure (Ω))))
     (eigenval : ι → ℝ)
     (h_sum : ∀ x, HasSum
       (fun i => (eigenval i * @inner ℝ _ _ (b i) x) • b i) (T x))
-    (f : Lp ℝ 2 μ) :
+    (f : Lp ℝ 2 (volume : Measure (Ω))) :
     HasSum (fun i => eigenval i * (@inner ℝ _ _ (b i) f) ^ 2)
       (@inner ℝ _ _ f (T f)) := by
   have h1 := (h_sum f).mapL (innerSL ℝ f)
@@ -779,18 +783,18 @@ with eigenbasis indexed by a type with ≥ 2 elements:
 - The top eigenvalue lam₀ > 0 is simple.
 - All other eigenvalues satisfy |λ| < lam₀.
 -/
-theorem jentzsch_theorem_proved {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    (T : Lp ℝ 2 μ →L[ℝ]
-      Lp ℝ 2 μ)
+theorem jentzsch_theorem_proved {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Measure Ω)).NeBot]
+    (T : Lp ℝ 2 (volume : Measure (Ω)) →L[ℝ]
+      Lp ℝ 2 (volume : Measure (Ω)))
     (hT_compact : IsCompactOperator T)
     (hT_sa : IsSelfAdjoint T)
     (hT_pi : IsPositivityImproving' T) :
     ∀ {ι : Type}
-      (b : HilbertBasis ι ℝ (Lp ℝ 2 μ))
+      (b : HilbertBasis ι ℝ (Lp ℝ 2 (volume : Measure (Ω))))
       (eigenval : ι → ℝ)
       (_h_eigen : ∀ i,
-        (T : Lp ℝ 2 μ →ₗ[ℝ]
-          Lp ℝ 2 μ) (b i) = eigenval i • b i)
+        (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+          Lp ℝ 2 (volume : Measure (Ω))) (b i) = eigenval i • b i)
       (_h_sum : ∀ x, HasSum (fun i => (eigenval i * @inner ℝ _ _ (b i) x) • b i) (T x))
       (_h_nt : ∃ j k : ι, j ≠ k),
     ∃ i₀ : ι,
@@ -887,7 +891,7 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasurableSpace Ω] {μ : Measure 
     by_contra h_all; push_neg at h_all
     obtain ⟨j, _, _⟩ := h_nt
     -- ⟨f, Tf⟩ ≤ 0 for all f (spectral decomposition + all eigenval ≤ 0)
-    have h_rnp : ∀ f : Lp ℝ 2 μ,
+    have h_rnp : ∀ f : Lp ℝ 2 (volume : Measure (Ω)),
         @inner ℝ _ _ f (T f) ≤ 0 :=
       fun f => hasSum_le (fun i => mul_nonpos_of_nonpos_of_nonneg
         (h_all i) (sq_nonneg _)) (rayleigh_hasSum T b eigenval h_sum f)
@@ -939,17 +943,17 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasurableSpace Ω] {μ : Measure 
     have h_int := MeasureTheory.L2.integrable_inner (𝕜 := ℝ) (|b j|) (T (|b j|))
     have h_ae := (integral_eq_zero_iff_of_nonneg_ae h_nn h_int).mp h_eq
     -- |bj| = 0 a.e. from product = 0 a.e. and T|bj| > 0 a.e.
-    have h_abs_ae : ∀ᵐ x ∂μ,
-        (|b j| : Lp ℝ 2 μ).1 x = 0 := by
+    have h_abs_ae : ∀ᵐ x ∂(volume : Measure (Ω)),
+        (|b j| : Lp ℝ 2 (volume : Measure (Ω))).1 x = 0 := by
       filter_upwards [h_ae, hT_pos] with x hp hTp
       simp only [Pi.zero_apply] at hp
       exact (mul_eq_zero.mp hp).resolve_left (ne_of_gt hTp)
     -- |bj| = 0 in Lp: f =ᵐ 0 → eLpNorm = 0 → ‖f‖ = 0 → f = 0
     have h_snorm : MeasureTheory.eLpNorm
-        ((|b j| : Lp ℝ 2 μ).1) 2 volume = 0 := by
+        ((|b j| : Lp ℝ 2 (volume : Measure (Ω))).1) 2 volume = 0 := by
       rw [(eLpNorm_eq_zero_iff (Lp.aestronglyMeasurable _)
         (by norm_num : (2 : ENNReal) ≠ 0)).mpr h_abs_ae]
-    have h_norm_zero : ‖(|b j| : Lp ℝ 2 μ)‖ = 0 := by
+    have h_norm_zero : ‖(|b j| : Lp ℝ 2 (volume : Measure (Ω)))‖ = 0 := by
       simp [Lp.norm_def, h_snorm]
     exact habs_ne ((Lp.norm_eq_zero_iff
       (by norm_num : (0 : ENNReal) < 2)).mp h_norm_zero)
@@ -978,7 +982,7 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasurableSpace Ω] {μ : Measure 
   -- eigenval i₀ > 0
   have hi₀_pos : 0 < eigenval i₀ := lt_of_lt_of_le hj₀_pos (hi₀_is_max j₀)
   -- Rayleigh bound
-  have h_rayleigh : ∀ f : Lp ℝ 2 μ,
+  have h_rayleigh : ∀ f : Lp ℝ 2 (volume : Measure (Ω)),
       @inner ℝ _ _ f (T f) ≤ eigenval i₀ * ‖f‖ ^ 2 := by
     intro f
     -- ⟨f, Tf⟩ = Σ eigenval(i) * ⟨b(i), f⟩²
@@ -1020,8 +1024,8 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasurableSpace Ω] {μ : Measure 
   -- Proof: by self-adjointness, for j ≠ i₀, inner (b j) v = 0,
   -- so v = inner (b i₀) v • b i₀
   have h_simple_mult : ∀ v, v ≠ 0 →
-      (T : Lp ℝ 2 μ →ₗ[ℝ]
-        Lp ℝ 2 μ) v = eigenval i₀ • v →
+      (T : Lp ℝ 2 (volume : Measure (Ω)) →ₗ[ℝ]
+        Lp ℝ 2 (volume : Measure (Ω))) v = eigenval i₀ • v →
       ∃ c : ℝ, v = c • b i₀ := by
     classical
     intro v hv hTv
