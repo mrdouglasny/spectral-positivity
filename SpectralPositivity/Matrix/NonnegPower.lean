@@ -50,6 +50,7 @@ theorem Matrix.Nonneg.pow {M : Matrix n n ℝ} (hM : M.Nonneg) (k : ℕ) :
     intro l _
     exact mul_nonneg (ih i l) (hM l j)
 
+omit [Fintype n] [DecidableEq n] in
 /-- Sum of nonneg matrices is nonneg. -/
 theorem Matrix.Nonneg.sum {ι : Type*} {s : Finset ι}
     {M : ι → Matrix n n ℝ} (hM : ∀ i ∈ s, (M i).Nonneg) :
@@ -60,6 +61,7 @@ theorem Matrix.Nonneg.sum {ι : Type*} {s : Finset ι}
   intro k hk
   exact hM k hk i j
 
+omit [Fintype n] [DecidableEq n] in
 /-- Scalar multiple of a nonneg matrix by a nonneg scalar is nonneg. -/
 theorem Matrix.Nonneg.smul {M : Matrix n n ℝ} (hM : M.Nonneg) {c : ℝ} (hc : 0 ≤ c) :
     (c • M).Nonneg := by

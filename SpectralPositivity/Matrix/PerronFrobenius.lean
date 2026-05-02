@@ -140,6 +140,7 @@ theorem Matrix.IsIrreducible.exists_pos_power {A : Matrix n n ℝ}
 
 /-! ### Helper lemmas for mulVec positivity -/
 
+omit [DecidableEq n] in
 /-- A nonneg matrix applied to a nonneg vector gives a nonneg vector. -/
 lemma Matrix.Nonneg.mulVec_nonneg {A : Matrix n n ℝ} (hA : A.Nonneg)
     {v : n → ℝ} (hv : ∀ i, 0 ≤ v i) : ∀ i, 0 ≤ A.mulVec v i := by
@@ -147,6 +148,7 @@ lemma Matrix.Nonneg.mulVec_nonneg {A : Matrix n n ℝ} (hA : A.Nonneg)
   simp only [mulVec, dotProduct]
   exact Finset.sum_nonneg fun j _ => mul_nonneg (hA i j) (hv j)
 
+omit [DecidableEq n] in
 /-- A matrix with all positive entries, applied to a nonneg nonzero vector,
 gives a strictly positive vector. -/
 lemma Matrix.mulVec_pos_of_allPos {B : Matrix n n ℝ} (hB : ∀ i j, 0 < B i j)
@@ -158,6 +160,7 @@ lemma Matrix.mulVec_pos_of_allPos {B : Matrix n n ℝ} (hB : ∀ i j, 0 < B i j)
   exact Finset.sum_pos' (fun l _ => mul_nonneg (le_of_lt (hB i l)) (hv_nn l))
     ⟨j, Finset.mem_univ j, mul_pos (hB i j) hj⟩
 
+omit [DecidableEq n] in
 /-- A nonneg matrix applied to a positive vector gives a positive vector,
 provided each row has a positive entry. -/
 lemma Matrix.mulVec_pos_of_pos {A : Matrix n n ℝ} (hA : A.Nonneg)
@@ -203,6 +206,7 @@ lemma Matrix.pow_mulVec_comp {A : Matrix n n ℝ} {m l : ℕ} {v : n → ℝ} :
 
 -- ### Collatz–Wielandt monotonicity
 
+omit [DecidableEq n] in
 /-- Key Collatz–Wielandt monotonicity: if Bv >= lam*v componentwise and B >= 0,
 then B^2 v >= lam*(Bv) componentwise. -/
 lemma collatz_wielandt_monotone
@@ -221,6 +225,7 @@ lemma collatz_wielandt_monotone
         mul_le_mul_of_nonneg_left (hBv_ge j) (hB_nn i j)
     _ = lam * (B i j * v j) := by ring
 
+omit [DecidableEq n] in
 /-- Strict version: if B > 0 entrywise and Bv > lam*v at some coordinate,
 then B^2 v > lam*(Bv) at every coordinate. -/
 lemma collatz_wielandt_strict
@@ -260,6 +265,7 @@ Bv* = ρ(v*)·v* by the strict monotonicity.
 The full formalization connects Mathlib's `IsCompact.exists_isMaxOn`
 with `ContinuousOn.finset_inf'_apply` on a compact subset of the standard simplex. -/
 set_option maxHeartbeats 800000 in
+omit [DecidableEq n] in
 theorem allpos_has_pos_eigenvec (hn : Nonempty n)
     {B : Matrix n n ℝ} (hB : ∀ i j, 0 < B i j) :
     ∃ (μ : ℝ) (w : n → ℝ), 0 < μ ∧ (∀ i, 0 < w i) ∧ B.mulVec w = μ • w := by
@@ -399,7 +405,7 @@ theorem allpos_has_pos_eigenvec (hn : Nonempty n)
     by_contra h_ne
     have h_strict : ∃ j, μ * v_star j < B.mulVec v_star j := by
       by_contra h_all
-      push_neg at h_all
+      push Not at h_all
       exact h_ne (funext fun i => le_antisymm (h_all i)
         (by simp only [Pi.smul_apply, smul_eq_mul]; exact h_ge i))
     -- Define w = Bv* / ∑(Bv*) ∈ S
@@ -549,7 +555,7 @@ theorem perron_frobenius {A : Matrix n n ℝ} (hA : A.IsIrreducible) :
           -- The difference is nonneg, not identically zero, so Bz > 0 where z = y - tx
           have h_diff_pos_some : ∃ j, 0 < (A.mulVec w - t • w) j := by
             by_contra h_all
-            push_neg at h_all
+            push Not at h_all
             apply h_diff_zero
             ext i
             exact le_antisymm (h_all i) (h_diff_nn i)
@@ -580,7 +586,7 @@ theorem perron_frobenius {A : Matrix n n ℝ} (hA : A.IsIrreducible) :
       simp only [Pi.smul_apply, smul_eq_mul] at h1
       -- 0 < c * w i₀ and 0 < w i₀, so 0 < c
       by_contra hc_le
-      push_neg at hc_le
+      push Not at hc_le
       have : c * w i₀ ≤ 0 := mul_nonpos_of_nonpos_of_nonneg hc_le (le_of_lt (hw_pos i₀))
       linarith
     -- Now prove the key claim: B = A^k has a positive eigenvector.

@@ -56,7 +56,7 @@ theorem IntegralOperator.ae_pos_integral_of_ae_pos_kernel
     (T : IntegralOperator Ω)
     (hK : T.IsAEPositive)
     (f : Ω → ℝ)
-    (hf_meas : Measurable f)
+    (_hf_meas : Measurable f)
     (hf_nonneg : ∀ᵐ x ∂(volume : Measure Ω), 0 ≤ f x)
     (hf_ne : ¬ f =ᵐ[volume] 0)
     (hf_int : ∀ᵐ x ∂(volume : Measure Ω),
@@ -121,7 +121,7 @@ private theorem IntegralOperator.ae_pos_inner_integral
   set g : Ω → ℝ := fun x => ∫ y in B, T.kernel x y ∂volume with hg_def
   have h_A_pos : 0 < volume {x | ¬ 0 < g x} := by
     by_contra h_le
-    push_neg at h_le
+    push Not at h_le
     rw [nonpos_iff_eq_zero] at h_le
     apply h_not
     suffices ∀ᵐ x ∂(volume : Measure Ω), 0 < g x by
@@ -162,7 +162,7 @@ private theorem ae_pos_of_setIntegral_pos
   -- Need: volume {y | ¬ 0 < f y} = 0
   -- Equivalently: volume {y | f y ≤ 0} = 0
   by_contra h_pos
-  push_neg at h_pos
+  push Not at h_pos
   -- h_pos : volume {a | f a ≤ 0} ≠ 0
   set B := {y | f y ≤ 0} with hB_def
   have hB_meas : MeasurableSet B :=
