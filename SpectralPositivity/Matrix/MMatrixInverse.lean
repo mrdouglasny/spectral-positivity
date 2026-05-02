@@ -2,21 +2,21 @@
 Copyright (c) 2026 Michael R. Douglas. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 
-# Strict Positivity of M-matrix Inverse
+# M-matrix Inverse Positivity (strict + non-strict)
 
 For a non-singular M-matrix `M` (positive definite Z-matrix; equivalently
-PD with non-positive off-diagonal entries) on a finite "connected"
-lattice, the inverse `M⁻¹` is entrywise *strictly* positive (not just
-non-negative).
+PD with non-positive off-diagonal entries), the inverse `M⁻¹` is
+entrywise non-negative; on a "connected" lattice it is in fact strictly
+positive.
 
-The connectivity hypothesis is encoded by requiring the Metzler shift
-`Q := α • 1 - M` (entrywise non-negative for `α ≥ max_i M_ii`) to be
-`Matrix.IsIrreducible` in this library's sense (nonneg + per-pair
-`exists_pos_power` + a positive self-loop).
-
-This is the strict-positivity refinement of the well-known fact that
-M-matrix inverses are entrywise non-negative. The strict version
-requires irreducibility (connectedness of the off-diagonal pattern).
+This file provides both forms:
+* `Matrix.MMatrix.inverse_nonneg` — `M⁻¹ ≥ 0` entrywise, no
+  irreducibility required. Discharge: Laplace transform identity
+  (`laplace_transform_inverse_real`) + `metzler_exp_nonneg` applied to
+  `-M` (since `M` Z-matrix ⇒ `-M` Metzler) + `setIntegral_nonneg`.
+* `Matrix.MMatrix.inverse_pos` — `M⁻¹ > 0` strictly, requiring the
+  Metzler shift `Q := α • 1 - M` to be `Matrix.IsIrreducible`
+  (connectedness of the off-diagonal pattern).
 
 ## References
 
@@ -25,18 +25,15 @@ requires irreducibility (connectedness of the off-diagonal pattern).
 * Horn & Johnson, *Topics in Matrix Analysis*, Cambridge, 1991, §2.5.
 * Seneta, *Non-negative Matrices and Markov Chains*, Springer, 2006.
 
-## Status
+## Downstream consumers
 
-`m_matrix_inverse_pos` is **axiomatized** with the proof outline below.
-The discharge requires assembling existing pieces (`metzler_exp_nonneg`
-in `MetzlerExp.lean`, `Matrix.IsIrreducible.exists_pos_power` in
-`PerronFrobenius.lean`) plus a strict-positivity refinement of
-`metzler_exp_nonneg` and a Laplace-transform integral identity. ~250
-LOC of careful Lean engineering; tracked as future discharge work.
-
-The mathematical content is fully standard textbook (Berman-Plemmons
-Thm 4.16). All pieces of the proof outline are individually accessible
-in this library or in Mathlib.
+* `markov-semigroups/Matrix/LaplaceTransform.lean` re-exports
+  `inverse_nonneg` under the historical name `m_matrix_inverse_nonneg`
+  (formerly an axiom there; now backed by this file). Used in turn by
+  pphi2N's QHJ thimble proofs (`Pphi2N/QuantumHJ/ThimbleLocalGeneric.lean`
+  etc.) for the diamagnetic / Combes-Thomas resolvent bound on the path
+  to the 2D mass gap.
+* `graphops-qft` consumes the strict version for resolvent positivity.
 -/
 
 import SpectralPositivity.Matrix.MetzlerExp
@@ -177,7 +174,7 @@ private lemma mul_diagonal_star_entry_lt (A B : Matrix n n ℝ) (d : n → ℝ) 
 private lemma integral_exp_neg_pos_lt (lam : ℝ) (hlam : 0 < lam) :
     ∫ t in Set.Ioi (0 : ℝ), Real.exp (-lam * t) = lam⁻¹ := by
   have h1 := integral_exp_mul_Ioi (show -lam < 0 from by linarith) 0
-  simp at h1; convert h1 using 1; congr 1; ext t; ring
+  simp at h1; convert h1 using 1; congr 1; ext t; ring_nf
 
 /-- **Laplace transform identity for the inverse of a PD matrix.**
 
@@ -218,14 +215,14 @@ theorem laplace_transform_inverse_real
     intro k _
     show MeasureTheory.IntegrableOn (f k) (Set.Ioi 0)
     have : f k = fun t => (U x k * U y k) * Real.exp (-(ev k) * t) := by
-      ext t; simp [f]; ring
+      ext t; simp [f]; ring_nf
     rw [this]
     exact (integrableOn_exp_mul_Ioi (by linarith [hev_pos k]) 0).const_mul _
   have hint_eval : ∀ k, ∫ t in Set.Ioi (0 : ℝ), f k t =
       U x k * (ev k)⁻¹ * U y k := by
     intro k
     have h : ∀ t, f k t = (U x k * U y k) * Real.exp (-(ev k) * t) := by
-      intro t; simp [f]; ring
+      intro t; simp [f]; ring_nf
     simp_rw [h]
     rw [integral_const_mul, integral_exp_neg_pos_lt (ev k) (hev_pos k)]; ring
   have rhs_eq : (∫ t in Set.Ioi (0 : ℝ), (NormedSpace.exp ((-t) • M) : Matrix n n ℝ) x y) =
@@ -277,7 +274,7 @@ private theorem heat_kernel_entry_integrableOn (M : Matrix n n ℝ)
   have hf_int : ∀ k, IntegrableOn (f k) (Set.Ioi (0 : ℝ)) := by
     intro k
     have : f k = fun t => (U x k * U y k) * Real.exp (-(ev k) * t) := by
-      ext t; simp [f]; ring
+      ext t; simp [f]; ring_nf
     rw [this]
     exact (integrableOn_exp_mul_Ioi (by linarith [hev_pos k]) 0).const_mul _
   -- The sum-form is integrable as a finite sum of integrables.
@@ -335,6 +332,53 @@ theorem Matrix.MMatrix.inverse_pos
     exact lt_of_lt_of_le ENNReal.zero_lt_top h1
   -- Step F: combine.
   exact (setIntegral_pos_iff_support_of_nonneg_ae hf_nn hf_int).mpr hsupp_pos
+
+/-- **Heat-kernel entrywise nonnegativity for a Z-matrix.**
+
+For `M` with non-positive off-diagonal entries and `t ≥ 0`,
+`exp((-t) • M) ≥ 0` entrywise. No irreducibility, no positive
+definiteness — just the sign condition on the off-diagonal.
+
+**Proof**: `(-t) • M = t • (-M)`, and `-M` has nonneg off-diagonal,
+so `metzler_exp_nonneg` (in `MetzlerExp.lean`) applies. -/
+private theorem mmatrix_exp_neg_nonneg
+    {M : Matrix n n ℝ} (hM_off : ∀ i j, i ≠ j → M i j ≤ 0)
+    {t : ℝ} (ht : 0 ≤ t) (x y : n) :
+    0 ≤ (NormedSpace.exp ((-t) • M) : Matrix n n ℝ) x y := by
+  have h_eq : (-t) • M = t • (-M) := by
+    ext i j
+    simp only [Matrix.smul_apply, Matrix.neg_apply, smul_eq_mul, neg_mul, mul_neg]
+  rw [h_eq]
+  have hL : (-M).NonnegOffDiag := fun i j hij => by
+    show 0 ≤ (-M) i j
+    rw [Matrix.neg_apply]
+    linarith [hM_off i j hij]
+  exact metzler_exp_nonneg hL ht x y
+
+/-- **Entrywise non-negativity of an M-matrix inverse**
+(Berman-Plemmons Thm 4.16; Horn-Johnson §2.5).
+
+For a real PD matrix `M` whose off-diagonal entries are non-positive
+(equivalently, a non-singular M-matrix), the inverse `M⁻¹` is
+entrywise non-negative.
+
+This is the non-strict version of `Matrix.MMatrix.inverse_pos`; it
+drops the irreducibility hypothesis. The proof uses
+`laplace_transform_inverse_real` (`M⁻¹ = ∫_(0,∞) exp(-tM) dt`) plus
+the heat-kernel entrywise non-negativity `mmatrix_exp_neg_nonneg`,
+combined with `setIntegral_nonneg`.
+
+Used by markov-semigroups for the diamagnetic-inequality chain (the
+`m_matrix_inverse_nonneg` axiom there is replaced by this theorem). -/
+theorem Matrix.MMatrix.inverse_nonneg
+    (M : Matrix n n ℝ) (hM_pd : M.PosDef)
+    (hM_off : ∀ i j, i ≠ j → M i j ≤ 0)
+    (x y : n) :
+    0 ≤ M⁻¹ x y := by
+  rw [laplace_transform_inverse_real M hM_pd x y]
+  refine setIntegral_nonneg measurableSet_Ioi ?_
+  intro t ht
+  exact mmatrix_exp_neg_nonneg hM_off (le_of_lt ht) x y
 
 end SpectralPositivity
 

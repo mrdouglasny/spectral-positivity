@@ -14,6 +14,20 @@ positivity in Lean 4. A shared library used by:
 - **Metzler matrix exponential:** $L$ nonneg off-diagonal $\Rightarrow e^{tL} \geq 0$ for $t \geq 0$
   (the heat kernel on a graph has nonneg entries)
 - **Decomposition:** $L = -cI + N$ with $N \geq 0$, so $e^{tL} = e^{-ct} e^{tN}$
+- **M-matrix inverse positivity:** if $M$ is a nonsingular M-matrix
+  (a $Z$-matrix with positive principal minors / equivalently $sI - A$
+  with $A \geq 0$ entrywise and $s > \rho(A)$), then $M^{-1} > 0$
+  entrywise. Theorem `Matrix.MMatrix.inverse_pos` in
+  `Matrix/MMatrixInverse.lean`. Used by markov-semigroups for the
+  diamagnetic-inequality chain and by graphops-qft for resolvent
+  positivity.
+- **M-matrix inverse non-negativity:** the same conclusion without the
+  irreducibility hypothesis: $M$ PD with $M_{ij} \leq 0$ for $i \neq j$
+  $\Rightarrow M^{-1} \geq 0$ entrywise. Theorem
+  `Matrix.MMatrix.inverse_nonneg` in `Matrix/MMatrixInverse.lean`. Used
+  by markov-semigroups (`Matrix/LaplaceTransform.lean` re-exports it as
+  `m_matrix_inverse_nonneg`, the previously axiomatized form) for the
+  diamagnetic chain consumed by pphi2N's QHJ thimble proofs.
 
 ### Operator level (`Operator/`)
 - **Positivity-preserving:** $f \geq 0 \Rightarrow Tf \geq 0$ (on $L^2(\Omega, \mu)$)
@@ -39,6 +53,7 @@ SpectralPositivity/
   Matrix/
     NonnegPower.lean      -- M ≥ 0 ⟹ M^k ≥ 0, truncated exp nonneg
     MetzlerExp.lean       -- Metzler decomposition, e^{tL} ≥ 0
+    MMatrixInverse.lean   -- M-matrix ⟹ M⁻¹ > 0 entrywise
   Operator/
     PositivityPreserving.lean -- IsPositivityPreserving, IsPositivityImproving
     Jentzsch.lean             -- Jentzsch theorem (spectral gap)
