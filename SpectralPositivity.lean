@@ -4,4 +4,5 @@ import SpectralPositivity.Matrix.NonnegPower
 import SpectralPositivity.Operator.Jentzsch
 import SpectralPositivity.Operator.SpectralRadius
 import SpectralPositivity.Matrix.PerronFrobenius
+import SpectralPositivity.Matrix.MMatrixInverse
 import SpectralPositivity.Operator.KernelPositivity
