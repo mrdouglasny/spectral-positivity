@@ -31,6 +31,7 @@ import Mathlib.MeasureTheory.Function.LpOrder
 import Mathlib.MeasureTheory.Function.L2Space
 import Mathlib.Analysis.InnerProductSpace.l2Space
 import Mathlib.Analysis.InnerProductSpace.Rayleigh
+import Mathlib.Analysis.Normed.Operator.Compact.Basic
 
 noncomputable section
 
