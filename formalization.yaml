@@ -1,0 +1,176 @@
+# formalization.yaml — https://github.com/mathlib-initiative/formalization.yaml (v0.3)
+# Describes the `main` branch state (current with origin/main, Mathlib/Lean v4.30.0).
+# Counts (0 sorries, 0 axioms) per README.md / ROADMAP.md.
+version: "v0.3"
+
+project:
+  name: "spectral-positivity"
+  authors: ["Michael R. Douglas"]
+  license: "Apache-2.0"
+
+sources:
+  - title: "Methods of Modern Mathematical Physics, IV: Analysis of Operators"
+    authors: ["Michael Reed", "Barry Simon"]
+    id: "ISBN:978-0-12-585004-9"
+    type: "textbook"
+    license: "proprietary"
+    note: "Jentzsch's theorem (Theorems XIII.43-44): simple positive ground eigenvalue, positive ground eigenfunction, spectral gap."
+  - title: "Matrix Analysis"
+    authors: ["Roger A. Horn", "Charles R. Johnson"]
+    id: "ISBN:978-0-521-54823-6"
+    type: "textbook"
+    license: "proprietary"
+    note: "2nd ed., Cambridge, 2013. Perron-Frobenius theory (Ch. 8, Thm 8.5.5)."
+  - title: "Nonnegative Matrices in the Mathematical Sciences"
+    authors: ["Abraham Berman", "Robert J. Plemmons"]
+    id: "ISBN:978-0-89871-321-3"
+    type: "textbook"
+    license: "proprietary"
+    note: "Classics in Applied Mathematics 9, SIAM, 1994. M-matrices and inverse positivity; Metzler matrices."
+
+status:
+  scope: >
+    A Mathlib shared library for matrix and operator positivity, intended for
+    reuse by the pphi2, graphops-qft, and markov-semigroups projects. Two
+    levels. (1) Matrix level: nonnegative matrix powers (M >= 0 => M^k >= 0),
+    the Metzler decomposition L = -cI + N with e^{tL} >= 0 for t >= 0,
+    nonsingular M-matrix inverse positivity (M^{-1} > 0 entrywise for the
+    irreducible case; M^{-1} >= 0 without irreducibility), and the
+    Perron-Frobenius theorem for irreducible nonnegative matrices (existence of
+    a positive eigenvalue with a strictly positive eigenvector). (2) Operator
+    level on L^2(Omega, volume): the positivity-preserving / positivity-improving
+    predicates and the full Jentzsch theorem in 7 phases (|Tf| <= T|f|, ground
+    state |f|, ground state strictly positive a.e., constant-sign eigenvectors,
+    simplicity of the top eigenvalue, and the spectral gap), plus an
+    integral-kernel positivity-improving criterion and spectral-radius-equals-norm
+    for self-adjoint operators. No sorries and no custom axioms.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+  main_results:
+    # --- operator level ---
+    - declaration: "jentzsch_theorem_proved"
+      file: "SpectralPositivity/Operator/JentzschProof.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "Jentzsch's theorem for a compact self-adjoint positivity-improving operator on L^2: simple positive top eigenvalue, positive ground state, spectral gap"
+          source: "ISBN:978-0-12-585004-9"
+    - declaration: "spectral_gap"
+      file: "SpectralPositivity/Operator/JentzschProof.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "spectral gap |lambda| < lambda_0 for non-top eigenvalues (Jentzsch, Phase 7)"
+          source: "ISBN:978-0-12-585004-9"
+    - declaration: "ground_state_strictly_positive"
+      file: "SpectralPositivity/Operator/JentzschProof.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "the ground eigenfunction is strictly positive a.e. (Jentzsch, Phase 4)"
+          source: "ISBN:978-0-12-585004-9"
+    - declaration: "IntegralOperator.ae_pos_kernel_of_positivity_improving"
+      file: "SpectralPositivity/Operator/KernelPositivity.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "an integral operator is positivity-improving iff its kernel is positive a.e."
+          source: "ISBN:978-0-12-585004-9"
+    # --- matrix level ---
+    - declaration: "perron_frobenius"
+      file: "SpectralPositivity/Matrix/PerronFrobenius.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "Perron-Frobenius: an irreducible nonnegative matrix has a positive eigenvalue with a strictly positive eigenvector"
+          source: "ISBN:978-0-521-54823-6"
+    - declaration: "SpectralPositivity.Matrix.MMatrix.inverse_pos"
+      file: "SpectralPositivity/Matrix/MMatrixInverse.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "a nonsingular irreducible M-matrix has an entrywise strictly positive inverse"
+          source: "ISBN:978-0-89871-321-3"
+    - declaration: "SpectralPositivity.Matrix.MMatrix.inverse_nonneg"
+      file: "SpectralPositivity/Matrix/MMatrixInverse.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "a positive-definite Z-matrix has an entrywise nonnegative inverse (no irreducibility hypothesis)"
+          source: "ISBN:978-0-89871-321-3"
+    - declaration: "metzler_exp_nonneg"
+      file: "SpectralPositivity/Matrix/MetzlerExp.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "a Metzler matrix (nonnegative off-diagonal) has a nonnegative matrix exponential e^{tL} for t >= 0"
+          source: "ISBN:978-0-89871-321-3"
+    - declaration: "Matrix.Nonneg.pow"
+      file: "SpectralPositivity/Matrix/NonnegPower.lean"
+      sorry_count: 0
+      axioms: []
+      literature_dependencies:
+        - statement: "powers of an entrywise nonnegative matrix are entrywise nonnegative"
+          source: "ISBN:978-0-89871-321-3"
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["claude-opus-4-8"]
+      framework: "Claude Code"
+      prompting_notes: "Cycle-by-cycle proving with compiler-guided repair."
+  notes: "Jentzsch proof extracted and generalized from the pphi2 project (1082 lines, L^2(R^n) -> L^2(Omega, volume)); matrix positivity originated in graphops-qft."
+
+fidelity:
+  divergences: >
+    Generalized beyond the original applications. The Jentzsch theorem is proved
+    on L^2(Omega, volume) for an arbitrary MeasureSpace Omega rather than on
+    L^2(R^n), so it serves as a reusable library result. The M-matrix inverse
+    positivity lemmas are stated for real matrices and supersede a previously
+    axiomatized form (m_matrix_inverse_nonneg) consumed downstream by
+    markov-semigroups. The M-matrix theorems live in the SpectralPositivity
+    namespace but use explicit Matrix.MMatrix.* dotted names, so their
+    fully-qualified names are SpectralPositivity.Matrix.MMatrix.inverse_pos /
+    .inverse_nonneg.
+
+review:
+  status: "self-assessed"
+  reviewers: []
+  notes: "0 sorries and 0 custom axioms per README.md and ROADMAP.md (counts trusted from docs; lake build not run). Current with origin/main (Mathlib/Lean v4.30.0)."
+
+alignment:
+  namespace: "SpectralPositivity"
+  statements:
+    - source: "ISBN:978-0-12-585004-9"
+      lean: "jentzsch_theorem_proved"
+      module: "SpectralPositivity.Operator.JentzschProof"
+      status: "proved"
+      note: "Full Jentzsch theorem; clean re-export API in Operator/Jentzsch.lean."
+    - source: "ISBN:978-0-12-585004-9"
+      lean: "IntegralOperator.ae_pos_kernel_of_positivity_improving"
+      module: "SpectralPositivity.Operator.KernelPositivity"
+      status: "proved"
+      note: "Kernel positivity-improving criterion (Reed-Simon IV, XIII.44)."
+    - source: "ISBN:978-0-521-54823-6"
+      lean: "perron_frobenius"
+      module: "SpectralPositivity.Matrix.PerronFrobenius"
+      status: "proved"
+      note: "Irreducible nonnegative matrix has positive eigenvalue + strictly positive eigenvector."
+    - source: "ISBN:978-0-89871-321-3"
+      lean: "SpectralPositivity.Matrix.MMatrix.inverse_pos"
+      module: "SpectralPositivity.Matrix.MMatrixInverse"
+      status: "proved"
+      note: "Irreducible nonsingular M-matrix => M^{-1} > 0 entrywise."
+    - source: "ISBN:978-0-89871-321-3"
+      lean: "SpectralPositivity.Matrix.MMatrix.inverse_nonneg"
+      module: "SpectralPositivity.Matrix.MMatrixInverse"
+      status: "proved"
+      note: "PD Z-matrix => M^{-1} >= 0 entrywise (no irreducibility)."
+    - source: "ISBN:978-0-89871-321-3"
+      lean: "metzler_exp_nonneg"
+      module: "SpectralPositivity.Matrix.MetzlerExp"
+      status: "proved"
+      note: "Metzler matrix => e^{tL} >= 0 for t >= 0."
+
+acknowledgements: ""
