@@ -177,7 +177,7 @@ private theorem abs_inner_le_inner_abs_abs {Ω : Type*} [MeasureSpace Ω]
     _ = ∫ x, @inner ℝ _ _ (|f| x) (|g| x) ∂volume := by
         apply integral_congr_ae
         filter_upwards [Lp.coeFn_abs f, Lp.coeFn_abs g] with x hf_abs hg_abs
-        simp only [inner, Inner.inner, starRingEnd_apply, star_trivial, RCLike.re_to_real]
+        simp only [inner, Inner.inner, star_trivial, RCLike.re_to_real]
         rw [hf_abs, hg_abs, Real.norm_eq_abs, abs_mul, mul_comm]
 
 /-- Phase 2: Inner product inequality. -/
@@ -419,7 +419,7 @@ theorem top_eigenvalue_simple {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Meas
         ((g : (Ω) → ℝ) x)) =ᵐ[volume]
         (fun x => (g : (Ω) → ℝ) x * (f : (Ω) → ℝ) x) := by
       filter_upwards with x
-      simp only [inner, Inner.inner, starRingEnd_apply, star_trivial, RCLike.re_to_real]
+      simp only [inner, Inner.inner, star_trivial, RCLike.re_to_real]
     rw [integral_congr_ae h_eq]
     have h_nn : (0 : (Ω) → ℝ) ≤ᶠ[ae volume]
         (fun x => (g : (Ω) → ℝ) x * (f : (Ω) → ℝ) x) := by
@@ -768,10 +768,13 @@ private theorem rayleigh_hasSum {Ω : Type*} [MeasureSpace Ω] {ι : Type}
       (@inner ℝ _ _ f (T f)) := by
   have h1 := (h_sum f).mapL (innerSL ℝ f)
   simp only [innerSL_apply_apply] at h1
-  convert h1 using 1
-  ext i
-  simp only [inner_smul_right]
-  rw [sq, real_inner_comm f (b i), mul_assoc]
+  have hfun : (fun i => eigenval i * (@inner ℝ _ _ (b i) f) ^ 2)
+      = fun i => @inner ℝ _ _ f ((eigenval i * @inner ℝ _ _ (b i) f) • b i) := by
+    funext i
+    simp only [inner_smul_right]
+    rw [sq, real_inner_comm f (b i), mul_assoc]
+  rw [hfun]
+  exact h1
 
 /-! ## Assembly: Jentzsch's theorem
 
@@ -1001,8 +1004,11 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Me
         have h_imii := b.hasSum_inner_mul_inner f f
         simp only [inner_self_eq_norm_sq_to_K, RCLike.ofReal_real_eq_id,
           id_eq] at h_imii
-        convert h_imii using 1
-        ext i; rw [sq, real_inner_comm f (b i)]
+        have hfun : (fun i => (@inner ℝ _ _ (b i) f) ^ 2)
+            = fun i => @inner ℝ _ _ f (b i) * @inner ℝ _ _ (b i) f := by
+          funext i; rw [sq, real_inner_comm f (b i)]
+        rw [hfun]
+        exact h_imii
       exact h_parseval.const_smul (eigenval i₀)
     exact hasSum_le h_le hs hs2
   -- Phase 6: simplicity
@@ -1014,10 +1020,7 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Me
       (by intro h; have := congr_arg (‖·‖) h; simp [h_norm_one] at this)
       (by intro h; have := congr_arg (‖·‖) h; simp [h_norm_one] at this)
       (by rw [h_eigen, hi]) (h_eigen i₀)
-      (by rw [MeasureTheory.L2.inner_def]
-          have := b.orthonormal.2 h_ne
-          dsimp only at this ⊢
-          convert this using 1)
+      (b.orthonormal.2 h_ne)
   -- Basis elements are nonzero
   have h_ne_zero : ∀ i, b i ≠ 0 := by
     intro i h; have := h_norm_one i; rw [h, norm_zero] at this; simp at this

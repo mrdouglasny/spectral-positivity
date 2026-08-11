@@ -194,7 +194,9 @@ theorem laplace_transform_inverse_real
   have hev_pos : ∀ i, 0 < ev i := hM.eigenvalues_pos
   have hspec : M = U * Matrix.diagonal ev * star U := by
     have := hH.spectral_theorem
-    simp only [Unitary.conjStarAlgAut_apply] at this; convert this using 2
+    simp only [Unitary.conjStarAlgAut_apply, RCLike.ofReal_real_eq_id,
+      Function.id_comp] at this
+    exact this
   have hU_unit : IsUnit U :=
     ⟨⟨U, star U, hH.eigenvectorUnitary.prop.2, hH.eigenvectorUnitary.prop.1⟩, rfl⟩
   have hU_inv : U⁻¹ = star U := inv_eq_left_inv hH.eigenvectorUnitary.prop.1
@@ -228,7 +230,7 @@ theorem laplace_transform_inverse_real
   have rhs_eq : (∫ t in Set.Ioi (0 : ℝ), (NormedSpace.exp ((-t) • M) : Matrix n n ℝ) x y) =
       ∑ k, U x k * (ev k)⁻¹ * U y k := by
     simp_rw [exp_sum]
-    rw [integral_finset_sum Finset.univ hint]
+    rw [integral_finsetSum Finset.univ hint]
     congr 1; ext k; exact hint_eval k
   have lhs_eq : M⁻¹ x y = ∑ k, U x k * (ev k)⁻¹ * U y k := by
     rw [hspec, mul_inv_rev (U * Matrix.diagonal ev) (star U), mul_inv_rev U (Matrix.diagonal ev)]
@@ -255,7 +257,9 @@ private theorem heat_kernel_entry_integrableOn (M : Matrix n n ℝ)
   have hev_pos : ∀ i, 0 < ev i := hM.eigenvalues_pos
   have hspec : M = U * Matrix.diagonal ev * star U := by
     have := hH.spectral_theorem
-    simp only [Unitary.conjStarAlgAut_apply] at this; convert this using 2
+    simp only [Unitary.conjStarAlgAut_apply, RCLike.ofReal_real_eq_id,
+      Function.id_comp] at this
+    exact this
   have hU_unit : IsUnit U :=
     ⟨⟨U, star U, hH.eigenvectorUnitary.prop.2, hH.eigenvectorUnitary.prop.1⟩, rfl⟩
   have hU_inv : U⁻¹ = star U := inv_eq_left_inv hH.eigenvectorUnitary.prop.1
@@ -279,7 +283,7 @@ private theorem heat_kernel_entry_integrableOn (M : Matrix n n ℝ)
     exact (integrableOn_exp_mul_Ioi (by linarith [hev_pos k]) 0).const_mul _
   -- The sum-form is integrable as a finite sum of integrables.
   have hsum_int : IntegrableOn (fun t => ∑ k, f k t) (Set.Ioi (0 : ℝ)) :=
-    integrable_finset_sum _ (fun k _ => hf_int k)
+    integrable_finsetSum _ (fun k _ => hf_int k)
   -- Transport via exp_sum.
   have heq : (fun t : ℝ => (NormedSpace.exp ((-t) • M) : Matrix n n ℝ) x y) =
       fun t => ∑ k, f k t := funext exp_sum
