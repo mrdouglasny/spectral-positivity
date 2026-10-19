@@ -70,7 +70,7 @@ theorem IntegralOperator.ae_pos_integral_of_ae_pos_kernel
   have hf_support : 0 < volume (Function.support f) := by
     rw [pos_iff_ne_zero]
     intro h_zero
-    exact hf_ne (ae_iff.mpr (by convert h_zero using 1))
+    exact hf_ne (ae_iff.mpr (by convert h_zero using 1; rfl))
   -- Step 3: For a.e. x, the integrand K(x,·) * f(·) is nonneg a.e. and has positive support
   filter_upwards [hK_ae, hf_nonneg, hf_int] with x hKx hfx hintx
   -- Goal: 0 < ∫ y, K(x,y) * f(y) dy
@@ -91,7 +91,7 @@ theorem IntegralOperator.ae_pos_integral_of_ae_pos_kernel
   -- But K(x,y) > 0 for a.e. y, so f(y) = 0 for a.e. y, contradicting hf_ne
   have h_ae_zero : (fun y => T.kernel x y * f y) =ᵐ[volume] 0 := by
     rw [Filter.EventuallyEq, ae_iff]
-    convert h_zero using 1
+    convert h_zero using 1; rfl
   -- K(x,y) * f(y) = 0 a.e. and K(x,y) > 0 a.e. implies f(y) = 0 a.e.
   have hf_ae_zero : f =ᵐ[volume] 0 := by
     filter_upwards [h_ae_zero, hKx] with y hy hKy
@@ -142,7 +142,7 @@ private theorem IntegralOperator.ae_pos_inner_integral
   have h_nonpos : ∫ x in {x | ¬ 0 < g x}, g x ∂volume ≤ 0 := by
     apply setIntegral_nonpos h_A_meas
     intro x hx
-    simp only [Set.mem_setOf_eq, not_lt] at hx
+    simp only [Set.mem_ofPred_eq, not_lt] at hx
     exact hx
   -- But hT says ∫_A ∫_B K > 0
   have h_pos := hT _ B h_A_meas hB_meas h_A_pos hB_pos

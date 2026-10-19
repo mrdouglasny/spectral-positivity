@@ -22,7 +22,7 @@ blocks for the Metzler matrix exponential theorem (in MetzlerExp.lean).
 -/
 
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 
 open Matrix BigOperators Finset
 
@@ -84,7 +84,7 @@ theorem markov_generator_nonneg_offdiag {m : Type*} [DecidableEq m]
     (M : Matrix m m ℝ) (hM : M.Nonneg) :
     (M - 1).NonnegOffDiag := by
   intro i j hij
-  simp [Matrix.sub_apply, Matrix.one_apply, if_neg hij]
+  simp [Matrix.sub_apply, Matrix.one_apply, ite_eq_right hij]
   exact hM i j
 
 end
