@@ -261,7 +261,7 @@ theorem abs_eigenvector_of_top_eigenvector {Ω : Type*} [MeasureSpace Ω]
     calc @inner ℝ _ _ y (T y) ≤ lam₀ * ‖y‖ ^ 2 := hlam₀_top y
       _ = lam₀ * ‖h‖ ^ 2 := by rw [hy]
   -- Step 5: Apply eq_smul_self_of_isLocalExtrOn
-  have h_eig := hT_sa.eq_smul_self_of_isLocalExtrOn (Or.inr h_max.localize)
+  have h_eig := hT_sa.eq_smul_self_of_isLocalExtrOn (Or.inr h_max.isLocalMaxOn)
   -- h_eig : T h = T.rayleighQuotient h • h
   -- Step 6: Compute rayleighQuotient h = lam₀
   have h_rq : T.rayleighQuotient h = lam₀ := by
@@ -584,7 +584,7 @@ theorem spectral_gap {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Measure Ω)).
         calc @inner ℝ _ _ y (T y) ≤ lam₀ * ‖y‖ ^ 2 := hlam₀_top y
           _ = lam₀ * ‖(|g| : Lp ℝ 2 _)‖ ^ 2 := by rw [hy]
       have h_abs_eig := hT_sa.eq_smul_self_of_isLocalExtrOn
-        (Or.inr h_abs_max.localize)
+        (Or.inr h_abs_max.isLocalMaxOn)
       have h_rq : T.rayleighQuotient (|g| : Lp ℝ 2 _) = lam₀ := by
         unfold ContinuousLinearMap.rayleighQuotient
         simp only [ContinuousLinearMap.reApplyInnerSelf_apply]
@@ -952,8 +952,7 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Me
     -- |bj| = 0 in Lp: f =ᵐ 0 → eLpNorm = 0 → ‖f‖ = 0 → f = 0
     have h_snorm : MeasureTheory.eLpNorm
         ((|b j| : Lp ℝ 2 (volume : Measure (Ω))).1) 2 volume = 0 := by
-      rw [(eLpNorm_eq_zero_iff (Lp.aestronglyMeasurable _)
-        (by norm_num : (2 : ENNReal) ≠ 0)).mpr h_abs_ae]
+      rw [(eLpNorm_eq_zero_iff (by norm_num : (2 : ENNReal) ≠ 0)).mpr h_abs_ae]
     have h_norm_zero : ‖(|b j| : Lp ℝ 2 (volume : Measure (Ω)))‖ = 0 := by
       simp [Lp.norm_def, h_snorm]
     exact habs_ne ((Lp.norm_eq_zero_iff
@@ -964,7 +963,7 @@ theorem jentzsch_theorem_proved {Ω : Type*} [MeasureSpace Ω] [(ae (volume : Me
     h_finite_above _ (by linarith)
   -- j₀ is in this finite set
   have hj₀_mem : j₀ ∈ {i : ι | eigenval j₀ / 2 < |eigenval i|} := by
-    simp only [Set.mem_setOf_eq]
+    simp only [Set.mem_ofPred_eq]
     rw [abs_of_pos hj₀_pos]
     linarith
   -- Find the index with maximum eigenvalue in this finite set

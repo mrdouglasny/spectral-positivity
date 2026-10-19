@@ -307,7 +307,7 @@ theorem allpos_has_pos_eigenvec (hn : Nonempty n)
       rw [this]
       exact isClosed_iInter fun i => isClosed_le continuous_const (continuous_apply i)
     have h2 : IsClosed { v : n → ℝ | ∑ i, v i = 1 } :=
-      isClosed_eq (continuous_finset_sum _ fun i _ => continuous_apply i) continuous_const
+      isClosed_eq (continuous_finsetSum _ fun i _ => continuous_apply i) continuous_const
     exact h1.inter h2
   -- S ⊆ stdSimplex
   have hS_sub : S ⊆ stdSimplex ℝ n := by
@@ -371,7 +371,7 @@ theorem allpos_has_pos_eigenvec (hn : Nonempty n)
     intro i _
     apply ContinuousOn.div
     · -- B.mulVec v i = ∑ j, B i j * v j is continuous
-      exact continuousOn_finset_sum Finset.univ fun j _ =>
+      exact continuousOn_finsetSum Finset.univ fun j _ =>
         (continuous_const.mul (continuous_apply j)).continuousOn
     · exact (continuous_apply i).continuousOn
     · intro v ⟨hv_lb, _⟩
